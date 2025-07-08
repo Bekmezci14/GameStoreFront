@@ -3,44 +3,25 @@ using GameStore.Frontend.Models;
 
 namespace GameStore.Frontend.Clients;
 
-public class GamesClient
+public class GamesClient(HttpClient httpClient)
 {
-    private readonly List<GameSummary> games = [
-    new(){
-        Id = 1,
-        Name = "Street Fighter 2",
-        Genre = "Fighting",
-        Price = 19.99M,
-        ReleaseDate = new DateOnly(1992,7,15)
-    },
-    new(){
-        Id = 2,
-        Name = "pes6",
-        Genre = "Sports",
-        Price = 39.99M,
-        ReleaseDate = new DateOnly(2006,8,18)
-    }
+    
+    public async Task<GameSummary[]> GetGamesAsync()
+            => await httpClient.GetFromJsonAsync<GameSummary[]>("games") ?? [];
 
-    ];
+    public async Task AddGameAsync(GameDetails game)
+    => await httpClient.PostAsJsonAsync("games", game);
+    
+    public async Task UpdateGameAsync(GameDetails updatedGame)
+    => await httpClient.PutAsJsonAsync($"games/{updatedGame.Id}", updatedGame);
 
-    private readonly Genre[] genres = new GenresClient().GetGenres();
+    public async Task DeleteGameAsync(int id)
+    => await httpClient.DeleteAsync($"games/{id}");
 
-    public GameSummary[] GetGames() => [.. games];
 
-    public void AddGame(GameDetails game)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(game.GenreId);
-        var genre = genres.Single(genre => genre.Id == int.Parse(game.GenreId));
+    public async Task<GameDetails> GetGameAsync(int id)
+    => await httpClient.GetFromJsonAsync<GameDetails>($"games/{id}")
+    ??  throw new Exception("Could not find the game!");
 
-        var gameSummary = new GameSummary
-        {
-            Id = games.Count + 1,
-            Name = game.Name,
-            Genre = genre.Name,
-            Price = game.Price,
-            ReleaseDate = game.ReleaseDate,
-        };
-        games.Add(gameSummary);
-    }
-
+    
 }
